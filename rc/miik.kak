@@ -33,3 +33,12 @@ miik-disconnect-window %{
 hook global WinClose .* %{
     miik-disconnect-window
 }
+
+define-command -docstring "Sends main selection to MIIK" \
+miik-send %{
+    execute-keys "|tee $kak_opt_miik_connection/stdin<ret>"
+    evaluate-commands %sh{
+        echo "info '$(cat $kak_opt_miik_connection/stdout)'"
+        echo "info '$(cat $kak_opt_miik_connection/result)'"
+    }
+}

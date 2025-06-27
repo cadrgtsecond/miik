@@ -31,6 +31,9 @@
   (uiop:run-program '("mkfifo" "/tmp/miikfifo") :ignore-error-status t)
   (setf *connection-thread* (bt:make-thread #'connection-loop :name "miik-thread")))
 
+(defun test3 ()
+  (print "Hello"))
+
 (defun stop ()
   "Stops listening for more connections, and kills all threads. Does not delete /tmp/miikfifo"
   (when (bt:thread-alive-p *connection-thread*)
