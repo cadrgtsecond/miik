@@ -3,7 +3,7 @@
   :author "cadrgtsecond"
   :license ""
   :homepage ""
-  :depends-on (bordeaux-threads)
+  :depends-on (usocket bordeaux-threads)
   :serial t
   :components ((:module "src" :components ((:file "package"))))
-  :description "")
+  :description "The Meagre Lisp Interaction Mode for Kakoune")
