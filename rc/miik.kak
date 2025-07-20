@@ -1,44 +1,25 @@
-define-command -docstring "selects a Lisp form" \
+define-command -docstring 'selects a Lisp form' -override \
 miik-select-form %{
     try %{
-        execute-keys "<a-a>b"
+        execute-keys '<a-a>b'
         miik-select-form
     }
 }
 
-declare-option -docstring "The location of the current MIIK repl connection" str miik_connection
+declare-option -docstring 'The location of the miik' str miik_host 'localhost:3700'
 
-define-command -docstring "connects to a MIIK repl" \
-miik-connect-window %{
-    evaluate-commands %sh{
-        [ -p /tmp/miikfifo ] || echo "fail 'Failed to connect to MIIK. Check if it is running'"
-    }
+define-command -docstring 'Sends the selection to the miik server' -override \
+miik-send-selection %{
+    # TODO: Take the response and show it in a highligher
+    execute-keys "<a-|>socat - tcp:%opt{miik_host}<ret>"
+}
 
-    set-option window miik_connection %sh{
-        IFS=''
-        file=$(mktemp miikreplXXXXXX -d --tmpdir)
-        mkfifo $file/stdin
-        mkfifo $file/stdout
-        mkfifo $file/result
-
-        echo $file >> /tmp/miikfifo
-        echo $file
+define-command -docstring 'Sends a form to the miik server' -override \
+miik-send-form %{
+    evaluate-commands -draft %{
+        miik-select-form
+        miik-send-repl
     }
 }
 
-define-command -docstring "disconnects from MIIK" \
-miik-disconnect-window %{
-    nop %sh{ rm -rf $kak_opt_miik_connection }
-}
-hook global WinClose .* %{
-    miik-disconnect-window
-}
-
-define-command -docstring "Sends main selection to MIIK" \
-miik-send %{
-    execute-keys "|tee $kak_opt_miik_connection/stdin<ret>"
-    evaluate-commands %sh{
-        echo "info '$(cat $kak_opt_miik_connection/stdout)'"
-        echo "info '$(cat $kak_opt_miik_connection/result)'"
-    }
-}
+declare-user-mode miik
