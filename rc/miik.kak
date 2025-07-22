@@ -24,8 +24,11 @@ provide-module miik %{
 
     define-command -docstring 'Sends the selection to the miik server' \
     miik-send-selection %{
-        evaluate-commands -draft -save-regs 'a' %{
-            set-register a %sh{ printf '%s' "$kak_selection" | socat - "tcp:$kak_opt_miik_host" }
+        evaluate-commands -draft -save-regs '^ab' %{
+            # Evaluate things in the correct package
+            execute-keys 'Z<a-/>in-package<ret><a-a>b"byz'
+
+            set-register a %sh{ printf '%s\n%s' "$kak_main_reg_b" "$kak_selection" | socat - "tcp:$kak_opt_miik_host" }
             execute-keys '<a-:>;'
             set-option window miik_response %val{timestamp} "%val{selection_desc}|%val{selection}{comment}{\} %reg{a}"
         }

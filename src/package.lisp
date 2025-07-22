@@ -6,13 +6,18 @@
 
 (defvar *real-stdout*)
 
+(defun evaluate-stream (stream)
+  (handler-case
+    (loop
+      (eval (read stream)))
+    ;; We have done evaluating
+    (end-of-file ())
+    (error (e) (format *real-stdout* "miik error: ~a~%" e))))
 (defun handle-connection (stream)
-  (format stream "~a~%"
-    (let ((*real-stdout* *standard-output*))
-      (handler-case
-        (with-output-to-string (*standard-output*)
-          (eval (read stream)))
-        (error (e) (format t "miik error: ~a~%" e)))))
+  (let ((*real-stdout* *standard-output*))
+    (format stream "~a~%"
+      (with-output-to-string (*standard-output*)
+        (evaluate-stream stream))))
   (force-output stream))
 
 (defun main (host port)
@@ -36,3 +41,7 @@
     (incf *counter*)))
 #+nil
 (test)
+#+nil
+(print *counter*)
+#+nil
+(apropos 'server)
