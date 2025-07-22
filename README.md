@@ -29,4 +29,9 @@ Finally, put your cursor on any Lisp form and use
 to send it to the REPL.
 miik will display the response in an inline hint.
 
+## Images
+### Evaluating code
 ![miik overlay](images/evaluating_mutable_state.png)
+
+### Autocompleet
+![miik autocomplete](images/autocomplete.gif)
