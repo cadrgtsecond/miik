@@ -4,8 +4,12 @@ miik-enable-window %{
 
     add-highlighter window/miik_response replace-ranges miik_response
     set-option window completers "option=miik_completions" %opt{completers}
-    hook -group miik window NormalIdle .* %{
+    hook -group miik window User miik_image_changed %{
         miik-generate-completion-candidates
+    }
+    # If the user focuses into the window, assume they switched to the REPL
+    hook -group miik window FocusIn %val{client} %{
+        trigger-user-hook miik_image_changed
     }
     hook -group miik window InsertChar .* %{
         evaluate-commands -draft %{
@@ -46,6 +50,7 @@ provide-module miik %{
             execute-keys '<a-:>;'
             set-option window miik_response %val{timestamp} "%val{selection_desc}|%val{selection}{comment}{\} %reg{a}"
         }
+        trigger-user-hook miik_image_changed
     }
 
     define-command -docstring 'Generates miik completion candidates' -hidden \
