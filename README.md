@@ -33,5 +33,5 @@ miik will display the response in an inline hint.
 ### Evaluating code
 ![miik overlay](images/evaluating_mutable_state.png)
 
-### Autocompleet
+### Autocomplete
 ![miik autocomplete](images/autocomplete.gif)

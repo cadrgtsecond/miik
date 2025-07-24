@@ -4,6 +4,9 @@
 
 (in-package #:miik)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; CORE PLUGIN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar *real-stdout*)
 
 (defun evaluate-stream (stream)
@@ -13,6 +16,7 @@
     ;; We have done evaluating
     (end-of-file ())
     (error (e) (format *real-stdout* "miik error: ~a~%" e))))
+
 (defun handle-connection (stream)
   (let ((*real-stdout* *standard-output*))
     (format stream "~a~%"
@@ -32,6 +36,39 @@
 
 (defun stop-server ()
   (bt:destroy-thread *miik-thread*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; KAKOUNE HELPERS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun symbol-kakoune-string (sym)
+  "Converts a symbol into a string suitable to send to Kakoune, escaping special characters"
+  (escape-for-kakoune (string-downcase (format nil "~s" sym))))
+
+(defun escape-for-kakoune (str)
+  "Makes a string safe for Kakoune by escaping \\ or |"
+  (with-output-to-string (s)
+    (loop
+      for char across str
+      do (format s "~a"
+           (case char
+             (#\\ "\\\\")
+             (#\|  "\\|")
+             (t   char))))))
+
+#+nil
+(print (escape-for-kakoune "some|ugly|\\stuff"))
+
+(defun generate-completions ()
+  (loop
+    for sym in (apropos-list "")
+    ;; TODO: Generate more useful informating for each symbol, such as whether it is fbound
+    ;; TODO: Generate docs
+    do (format t "~a||{\\}~a~%" (symbol-kakoune-string sym) (symbol-kakoune-string sym))))
+
+#+nil
+(let ((*standard-output* *real-stdout*))
+  (generate-completions "test"))
 
 #+nil
 (progn
