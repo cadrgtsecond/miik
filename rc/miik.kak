@@ -50,18 +50,15 @@ provide-module miik %{
 
     define-command -docstring 'Generates miik completion candidates' -hidden \
     miik-generate-completion-candidates %{
-        evaluate-commands -draft -save-regs '^|/ab12' %{
+        evaluate-commands -draft -save-regs '^|/a0' %{
             # We need to switch packages so that the Common Lisp printe generates shortened names
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
             }
-            set-register b %val{bufname}
-            execute-keys ':e -scratch<ret>'
-
-            execute-keys %{\!printf '%s\n(miik::generate-completions)' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host"<ret>}
-            execute-keys '<a-s>_'
-            execute-keys ': set-option "buffer=%reg{b}" miik_completions_response %reg{dot}<ret>'
-            execute-keys ': db<ret>'
+            evaluate-commands %sh{
+                results=$(printf '%s\n(miik::generate-completions)' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host")
+                printf 'set-option buffer=%s miik_completions_response %s' "$kak_bufname" "$results"
+            }
         }
     }
 

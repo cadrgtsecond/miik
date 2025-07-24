@@ -41,12 +41,18 @@
 ;;;; KAKOUNE HELPERS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun symbol-kakoune-string (sym)
-  "Converts a symbol into a string suitable to send to Kakoune, escaping special characters"
-  (escape-for-kakoune (string-downcase (format nil "~s" sym))))
+(defun kak-quoted-string (str)
+  "Converts a Common Lisp string into one that can be sent to kakoune"
+  (format nil "'~a'"
+    (with-output-to-string (s)
+      (loop for char across str
+            do (format s "~a"
+                 (case char
+                   (#\' "''")
+                   (t char)))))))
 
-(defun escape-for-kakoune (str)
-  "Makes a string safe for Kakoune by escaping \\ or |"
+(defun escape-completion-result (str)
+  "Escape the result of completion by escaping | and \\"
   (with-output-to-string (s)
     (loop
       for char across str
@@ -56,15 +62,13 @@
              (#\|  "\\|")
              (t   char))))))
 
-#+nil
-(print (escape-for-kakoune "some|ugly|\\stuff"))
-
 (defun generate-completions ()
   (loop
     for sym in (apropos-list "")
     ;; TODO: Generate more useful informating for each symbol, such as whether it is fbound
     ;; TODO: Generate docs
-    do (format t "~a||{\\}~a~%" (symbol-kakoune-string sym) (symbol-kakoune-string sym))))
+    for sym-name = (escape-completion-result (string-downcase (format nil "~s" sym)))
+    do (format t "~a " (kak-quoted-string (format nil "~a||{\\}~a" sym-name sym-name)))))
 
 #+nil
 (let ((*standard-output* *real-stdout*))
