@@ -55,8 +55,8 @@ provide-module miik %{
 
     define-command -docstring 'Generates miik completion candidates' -hidden \
     miik-generate-completion-candidates %{
-        evaluate-commands -draft -save-regs '^|/a0' %{
-            # We need to switch packages so that the Common Lisp printe generates shortened names
+        evaluate-commands -draft -save-regs '/a0' %{
+            # We need to switch packages so that the Common Lisp printer generates shortened names
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
             }
@@ -64,6 +64,27 @@ provide-module miik %{
                 results=$(printf '%s\n(miik::generate-completions)' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host")
                 printf 'set-option buffer=%s miik_completions_response %s' "$kak_bufname" "$results"
             }
+        }
+    }
+
+    define-command -docstring '`describe`s a symbol and shows result in a popup' -params 1 \
+    miik-describe-symbol %{
+        evaluate-commands -save-regs '/0ab' %{
+            set-register b "%val{cursor_line}.%val{cursor_column}"
+            try %{
+                execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
+            }
+            info -anchor %reg{b}  %sh{
+                printf "%s(describe '$1)" "$kak_reg_a" | socat - tcp:localhost:3700
+            }
+        }
+    }
+    define-command -docstring '`describe`s the symbol under the cursor' \
+    miik-describe-cursor %{
+        evaluate-commands -save-regs 'a' %{
+            set-option -add local extra_word_chars ':' '-'
+            execute-keys -draft '<a-a>w"ay'
+            miik-describe-symbol %reg{a}
         }
     }
 
@@ -77,5 +98,6 @@ provide-module miik %{
 
     declare-user-mode miik
     map -docstring 'Send the current form to miik' global miik c ': miik-send-form<ret>'
-    map -docstring 'Trigger reloading of miik client' global miik r ': trigger-user-hook miik_image_changed<ret>'
+    map -docstring 'Trigger reloading of miik client' global miik L ': trigger-user-hook miik_image_changed<ret>'
+    map -docstring 'Describe symbol under cursor' global miik h ': miik-describe-cursor<ret>'
 }
