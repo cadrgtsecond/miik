@@ -4,18 +4,15 @@
 
 (in-package #:miik)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; CORE PLUGIN
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar *real-stdout*)
 
 (defun evaluate-stream (stream)
   (handler-case
-    (loop
-      (eval (read stream)))
-    ;; We have done evaluating
-    (end-of-file ())
-    (error (e) (format *real-stdout* "miik error: ~a~%" e))))
+   (loop
+     (eval (read stream)))
+   ;; We have done evaluating
+   (end-of-file ())
+   (error (e) (format *real-stdout* "miik error: ~a~%" e))))
 
 (defun handle-connection (stream)
   (let ((*real-stdout* *standard-output*))
@@ -36,38 +33,6 @@
 
 (defun stop-server ()
   (bt:destroy-thread *miik-thread*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; KAKOUNE HELPERS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun kak-quoted-string (str)
-  "Converts a Common Lisp string into one that can be sent to kakoune"
-  (format nil "'~a'"
-    (with-output-to-string (s)
-      (loop for char across str
-            do (format s "~a"
-                 (case char
-                   (#\' "''")
-                   (t char)))))))
-
-(defun escape-completion-result (str)
-  "Escape the result of completion by escaping | and \\"
-  (with-output-to-string (s)
-    (loop
-      for char across str
-      do (format s "~a"
-           (case char
-             (#\\ "\\\\")
-             (#\|  "\\|")
-             (t   char))))))
-
-(defun generate-completions ()
-  (loop
-    for sym in (apropos-list "")
-    ;; TODO: Generate more useful informating for each symbol, such as whether it is fbound
-    ;; TODO: Generate docs
-    for sym-name = (escape-completion-result (string-downcase (format nil "~s" sym)))
-    do (format t "~a " (kak-quoted-string (format nil "~a||{\\}~a" sym-name sym-name)))))
 
 #+nil
 (let ((*standard-output* *real-stdout*))

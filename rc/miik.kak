@@ -7,6 +7,8 @@ miik-enable-window %{
     hook -group miik window User miik_image_changed %{
         miik-generate-completion-candidates
     }
+    miik-generate-completion-candidates
+
     # If the user focuses into the window, assume they switched to the REPL
     hook -group miik window FocusIn %val{client} %{
         trigger-user-hook miik_image_changed
@@ -55,27 +57,34 @@ provide-module miik %{
 
     define-command -docstring 'Generates miik completion candidates' -hidden \
     miik-generate-completion-candidates %{
-        evaluate-commands -draft -save-regs '/a0' %{
+        evaluate-commands -draft -save-regs '^0ab' %{
+            set-register b %val{bufname}
+            set-option -add local extra_word_chars '-' ':'
             # We need to switch packages so that the Common Lisp printer generates shortened names
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
             }
-            evaluate-commands %sh{
-                results=$(printf '%s\n(miik::generate-completions)' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host")
-                printf 'set-option buffer=%s miik_completions_response %s' "$kak_bufname" "$results"
+            edit -scratch
+            execute-keys %{
+                !printf '%s\n(apropos "")' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host"<ret>
             }
+            execute-keys -draft '%<a-s>s\\|\|<ret>i\<esc>'
+            execute-keys '%_s^<ret><a-a>wyP`a|miik-describe-symbol <c-r>"|<esc>'
+            execute-keys '%s^[^\w]<ret>xd'
+            execute-keys '%<a-s>_'
+            set-option "buffer=%reg{b}" miik_completions_response %val{selections}
+            delete-buffer
         }
     }
 
     define-command -docstring '`describe`s a symbol and shows result in a popup' -params 1 \
     miik-describe-symbol %{
-        evaluate-commands -save-regs '/0ab' %{
-            set-register b "%val{cursor_line}.%val{cursor_column}"
+        evaluate-commands -save-regs '0a' %{
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
             }
-            info -anchor %reg{b}  %sh{
-                printf "%s(describe '$1)" "$kak_reg_a" | socat - tcp:localhost:3700
+            info -anchor "%val{cursor_line}.%val{cursor_column}"  %sh{
+                printf "%s(describe '%s)" "$kak_reg_a" "$1" | socat - "tcp:$kak_opt_miik_host"
             }
         }
     }
