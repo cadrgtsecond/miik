@@ -76,4 +76,6 @@ provide-module miik %{
     }
 
     declare-user-mode miik
+    map -docstring 'Send the current form to miik' global miik c ': miik-send-form<ret>'
+    map -docstring 'Trigger reloading of miik client' global miik r ': trigger-user-hook miik_image_changed<ret>'
 }
