@@ -44,11 +44,15 @@ provide-module miik %{
 
     define-command -docstring 'Sends the selection to the miik server' \
     miik-send-selection %{
-        evaluate-commands -draft -save-regs '^ab' %{
+        evaluate-commands -draft -save-regs 'ab' %{
             # Evaluate things in the correct package
-            execute-keys 'Z<a-/>in-package<ret><a-a>b"byz'
+            execute-keys -draft '<a-/>in-package<ret><a-a>b"by'
 
-            set-register a %sh{ printf '%s\n%s' "$kak_main_reg_b" "$kak_selection" | socat - "tcp:$kak_opt_miik_host" }
+            set-register a %sh{
+                printf '%s
+                (miik:with-compilation-info (:pathname "%s" :character-offset "%s" :kak-selection "%s")
+                  %s)' "$kak_main_reg_b" "$kak_buffile" "$kak_cursor_byte_offset" "$kak_selection_desc" "$kak_selection" | socat - "tcp:$kak_opt_miik_host"
+            }
             execute-keys '<a-:>;'
             set-option window miik_response %val{timestamp} "%val{selection_desc}|%val{selection}{comment}{\} %reg{a}"
         }

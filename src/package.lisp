@@ -4,7 +4,8 @@
            #:stop-server
            #:*real-stdout*
            #:get-object-compilation-info
-           #:get-definition-compilation-info))
+           #:get-definition-compilation-info
+           #:with-compilation-info))
 
 (in-package #:miik)
 
@@ -37,6 +38,14 @@
 
 (defun stop-server ()
   (bt:destroy-thread *miik-thread*))
+
+(defun print-plist (plist)
+  "Prints a PLIST in a form more suitable for consumption by Unix"
+  (loop for vals on plist by #'cddr
+        ;; TODO: Escape cadr vals
+        do (format t "~a~a~a~%" (car vals) #\Tab (cadr vals))))
+#+nil
+(print-plist '(:hello "world"))
 
 ;;;; Source tracking
 (defmacro with-compilation-info ((&rest data &key pathname &allow-other-keys) form)
@@ -75,9 +84,9 @@ This DATA may be later retrieved with MIIK:GET-COMPILATION-INFO"
 (with-compilation-info (:pathname "src/package.lisp" :kak-selection "32.31")
   (defun hello () (print "hello")))
 #+nil
-(print (get-object-compilation-info #'hello))
+(print (get-object-compilation-info #'evaluate-stream))
 #+nil
-(print (get-definition-compilation-info 'hello :function))
+(print (get-definition-compilation-info 'evaluate-stream :function))
 #+nil
 (print (get-definition-compilation-info 'with-compilation-info :macro))
 #+nil
