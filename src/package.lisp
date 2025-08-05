@@ -1,6 +1,10 @@
 (defpackage #:miik
   (:use #:cl)
-  (:export #:start-server #:stop-server #:*real-stdout*))
+  (:export #:start-server
+           #:stop-server
+           #:*real-stdout*
+           #:get-object-compilation-info
+           #:get-definition-compilation-info))
 
 (in-package #:miik)
 
@@ -33,6 +37,51 @@
 
 (defun stop-server ()
   (bt:destroy-thread *miik-thread*))
+
+;;;; Source tracking
+(defmacro with-compilation-info ((&rest data &key pathname &allow-other-keys) form)
+  "Compiles FORM, with any DATA specified attached to the definition.
+This DATA may be later retrieved with MIIK:GET-COMPILATION-INFO"
+  `(with-compilation-unit
+     #+sbcl
+     (:source-namestring ,pathname
+      :source-plist ',data)
+     #+(not sbcl)
+     ()
+     (eval ',form)))
+
+(defun get-source-info (source)
+  "Returns the compilation info associated with the given source"
+  (or (sb-introspect:definition-source-plist source)
+      (with-accessors ((pathname sb-introspect:definition-source-pathname)
+                       (character-offset sb-introspect:definition-source-character-offset))
+        source
+        `(:pathname ,pathname
+          :character-offset ,character-offset))))
+  
+(defun get-object-compilation-info (obj)
+  "Returns the compilation information associated with the given object"
+  #+sbcl
+  (get-source-info (sb-introspect:find-definition-source obj))
+                            
+  #+(not sbcl)
+  (error "Not implemented yet"))
+
+(defun get-definition-compilation-info (name type)
+  #+sbcl
+  (mapcar #'get-source-info (sb-introspect:find-definition-sources-by-name name type)))
+
+#+nil
+(with-compilation-info (:pathname "src/package.lisp" :kak-selection "32.31")
+  (defun hello () (print "hello")))
+#+nil
+(print (get-object-compilation-info #'hello))
+#+nil
+(print (get-definition-compilation-info 'hello :function))
+#+nil
+(print (get-definition-compilation-info 'with-compilation-info :macro))
+#+nil
+(print (get-object-compilation-info #'stop-server))
 
 #+nil
 (let ((*standard-output* *real-stdout*))

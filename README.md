@@ -35,3 +35,7 @@ miik will display the response in an inline hint.
 
 ### Autocomplete
 ![miik autocomplete](images/autocomplete.gif)
+
+## Prior Art
+- [Swank](https://github.com/slime/slime/blob/master/swank.lisp)
+- [definitions](https://shinmera.github.io/definitions/)
