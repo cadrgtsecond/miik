@@ -46,7 +46,7 @@ provide-module miik %{
     miik-send-selection %{
         evaluate-commands -draft -save-regs 'ab' %{
             # Evaluate things in the correct package
-            execute-keys -draft '<a-/>in-package<ret><a-a>b"by'
+            execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"by'
 
             set-register a %sh{
                 printf '%s
@@ -61,7 +61,7 @@ provide-module miik %{
 
     define-command -docstring 'Generates miik completion candidates' -hidden \
     miik-generate-completion-candidates %{
-        evaluate-commands -draft -save-regs '^0ab' %{
+        evaluate-commands -draft -save-regs 'ab' %{
             set-register b %val{bufname}
             # We need to switch packages so that the Common Lisp printer generates shortened names
             try %{
@@ -84,7 +84,7 @@ provide-module miik %{
 
     define-command -docstring '`describe`s a symbol and shows result in a popup' -params 1 \
     miik-describe-symbol %{
-        evaluate-commands -save-regs '0a' %{
+        evaluate-commands -save-regs 'a' %{
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
             }
@@ -95,9 +95,35 @@ provide-module miik %{
     }
     define-command -docstring '`describe`s the symbol under the cursor' \
     miik-describe-cursor %{
-        evaluate-commands -save-regs 'a' %{
-            execute-keys -draft '<a-/>[^\s()]+<ret>"ay'
-            miik-describe-symbol %reg{a}
+        evaluate-commands -draft %{
+            execute-keys '/[^\s()]+<ret>;<a-?><ret>'
+            miik-describe-symbol %val{selection}
+        }
+    }
+    define-command -docstring 'Go to (first) definition of symbol' \
+    miik-goto-definition -params 1 %{
+        evaluate-commands -save-regs '/a' %{
+            execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
+            evaluate-commands %sh{
+                response=$(printf '%s\n(miik:print-plist (car (miik:get-definition-compilation-info '\''%s :function)))' \
+                             "$kak_reg_a" "$1" | socat - "tcp:$kak_opt_miik_host")
+                pathname=$(printf '%s' "$response" | grep "^PATHNAME")
+                off=$(printf '%s' "$response" | grep "^CHARACTER-OFFSET")
+
+                if [ -n "$off" ] && [ -n "$pathname" ]
+                then
+                    printf "execute-keys ': edit %s<ret>gk%sl/defun<ret>'\n" "${pathname##PATHNAME	}" "${off##CHARACTER-OFFSET	}"
+                else
+                    printf 'info "Failed to find definition"\n'
+                fi
+            }
+        }
+    }
+    define-command -docstring 'Goto definition of symbol under cursor' \
+    miik-goto-definition-cursor %{
+        evaluate-commands %{
+            execute-keys '/[^\s()]+<ret>;<a-?><ret>'
+            miik-goto-definition %val{selection}
         }
     }
 

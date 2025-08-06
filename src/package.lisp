@@ -5,7 +5,8 @@
            #:*real-stdout*
            #:get-object-compilation-info
            #:get-definition-compilation-info
-           #:with-compilation-info))
+           #:with-compilation-info
+           #:print-plist))
 
 (in-package #:miik)
 
@@ -13,8 +14,8 @@
 
 (defun evaluate-stream (stream)
   (handler-case
-   (loop
-     (eval (read stream)))
+    (loop
+      (eval (read stream)))
    ;; We have done evaluating
    (end-of-file ())
    (error (e) (format *real-stdout* "miik error: ~a~%" e))))
