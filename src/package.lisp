@@ -44,6 +44,7 @@
   (loop for vals on plist by #'cddr
         ;; TODO: Escape cadr vals
         do (format t "~a~a~a~%" (car vals) #\Tab (cadr vals))))
+
 #+nil
 (print-plist '(:hello "world"))
 

@@ -15,7 +15,7 @@ miik-enable-window %{
     }
     hook -group miik window InsertChar .* %{
         evaluate-commands -draft %{
-            execute-keys '<a-b>'
+            execute-keys '<a-/>[^\s()]+<ret><a-;>'
             set-option window miik_completions "%val{cursor_line}.%val{cursor_column}@%val{timestamp}" %opt{miik_completions_response}
         }
     }
@@ -63,7 +63,6 @@ provide-module miik %{
     miik-generate-completion-candidates %{
         evaluate-commands -draft -save-regs '^0ab' %{
             set-register b %val{bufname}
-            set-option -add local extra_word_chars '-' ':'
             # We need to switch packages so that the Common Lisp printer generates shortened names
             try %{
                 execute-keys -draft '<esc>,<a-/>in-package<ret><a-a>b"ay'
@@ -72,10 +71,12 @@ provide-module miik %{
             execute-keys %{
                 !printf '%s\n(apropos "")' "$kak_reg_a" | socat - "tcp:$kak_opt_miik_host"<ret>
             }
+            # Escape | and \
             execute-keys -draft '%<a-s>s\\|\|<ret>i\<esc>'
-            execute-keys '%_s^<ret><a-a>wyP`a|miik-describe-symbol <c-r>"|<esc>'
-            execute-keys '%s^[^\w]<ret>xd'
-            execute-keys '%<a-s>_'
+            execute-keys '%_s^<ret>?[^\s()]+<ret>yP`a|miik-describe-symbol <c-r>"|<esc>'
+            # Remove bad lines
+            execute-keys '%<a-s><a-K>^.*?\|.*?\|.*?$<ret>d'
+            execute-keys '%<a-s>'
             set-option "buffer=%reg{b}" miik_completions_response %val{selections}
             delete-buffer
         }
@@ -95,8 +96,7 @@ provide-module miik %{
     define-command -docstring '`describe`s the symbol under the cursor' \
     miik-describe-cursor %{
         evaluate-commands -save-regs 'a' %{
-            set-option -add local extra_word_chars ':' '-'
-            execute-keys -draft '<a-a>w"ay'
+            execute-keys -draft '<a-/>[^\s()]+<ret>"ay'
             miik-describe-symbol %reg{a}
         }
     }
