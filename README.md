@@ -1,5 +1,5 @@
 # miik
-"Meagre lIsp Interaction mode for Kakoune"
+"Meagre lIsp Interface for Kakoune"
 
 miik is the little brother to SLIME, the Common Lisp Emacs plugin.
 It is designed for use within Kakoune, but the protocol is quite simple

@@ -6,4 +6,4 @@
   :depends-on (usocket bordeaux-threads #+sbcl sb-introspect)
   :serial t
   :components ((:module "src" :components ((:file "package"))))
-  :description "The Meagre Lisp Interaction Mode for Kakoune")
+  :description "The Meagre Lisp Interface for Kakoune")
